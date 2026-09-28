@@ -1,24 +1,45 @@
 package memory
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
 )
 
-func ReactiveCompact(messages []anthropic.MessageParam) []anthropic.MessageParam {
-	fmt.Println("  \033[31m[reactive compact] trimming to last 5 messages\033[0m")
-	start := len(messages) - 5
-	if start < 0 {
-		start = 0
+type ExtractedMemory struct {
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Body        string `json:"body"`
+}
+
+func messageText(msg anthropic.MessageParam) string {
+	var texts []string
+
+	for _, block := range msg.Content {
+		if block.OfText != nil {
+			texts = append(texts, block.OfText.Text)
+		}
 	}
 
-	tail := messages[start:]
-	result := []anthropic.MessageParam{
-		anthropic.NewUserMessage(anthropic.NewTextBlock(
-			"[Reactive compact] Earlier conversation trimmed. Continue from where you left off.",
-		)),
+	return strings.Join(texts, " ")
+}
+
+func extractResponseText(response *anthropic.Message) string {
+	if response == nil {
+		return ""
 	}
-	result = append(result, tail...)
-	return result
+
+	var texts []string
+
+	for _, block := range response.Content {
+		anyBlock := block.AsAny()
+
+		switch b := anyBlock.(type) {
+		case anthropic.TextBlock:
+			texts = append(texts, b.Text)
+		}
+	}
+
+	return strings.TrimSpace(strings.Join(texts, "\n"))
 }

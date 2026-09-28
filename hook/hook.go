@@ -51,9 +51,9 @@ func TriggerHooks(event string, ctx *HookContext) string {
 }
 
 func contextInjectHook(ctx *HookContext) string {
-	query := ctx.Query
+	ctx.Query = fmt.Sprintf("<context>\nWorking directory: %s\n</context>\n\n%s", config.WORKDIR, ctx.Query)
 	// Inject current working directory info into every prompt.
-	fmt.Printf("\033[90m[HOOK] UserPromptSubmit: working in %v\033[0m, query=%v\n", config.WORKDIR, query)
+	fmt.Printf("\033[90m[HOOK] UserPromptSubmit: working in %v\033[0m\n", config.WORKDIR)
 	return "" // return None = no modification, let prompt through
 }
 

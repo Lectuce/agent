@@ -5,6 +5,7 @@ go 1.26.5
 require (
 	github.com/adrg/frontmatter v0.2.0
 	github.com/anthropics/anthropic-sdk-go v1.75.0
+	github.com/chzyer/readline v1.5.1
 )
 
 require (
@@ -20,5 +21,6 @@ require (
 	github.com/tidwall/sjson v1.2.5 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.2 // indirect
 	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

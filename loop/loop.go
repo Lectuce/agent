@@ -1,11 +1,13 @@
 package loop
 
 import (
+	"agent/compact"
 	"agent/config"
 	"agent/hook"
 	"agent/memory"
 	"agent/prompt"
 	"agent/recovery"
+	"agent/session"
 	"agent/subagent"
 	"agent/tool"
 	"context"
@@ -15,9 +17,7 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 )
 
-var roundsSinceTodo = 0
-
-func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContext) error {
+func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContext, currentSession *session.Session) error {
 	handlers := make(map[string]tool.ToolHandler, 0)
 	for name, handler := range tool.ToolHandlers {
 		handlers[name] = handler
@@ -27,11 +27,23 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 		return subagent.SpawnSubagent(input, ctx)
 	}
 
-	messages := []anthropic.MessageParam{
+	// 会话
+	currentSession.Messages = append(currentSession.Messages,
 		anthropic.NewUserMessage(
 			anthropic.NewTextBlock(query),
 		),
+	)
+	messages := currentSession.Messages
+	defer func() {
+		currentSession.Messages = messages
+	}()
+
+	memoriesContent, err := memory.LoadMemories(messages, ctx)
+	if err != nil {
+		fmt.Printf("[memory load error: %v]\n", err)
+		memoriesContent = ""
 	}
+
 	rawsystem := prompt.GetSystemPrompt(*promptCtx)
 	system := []anthropic.TextBlockParam{
 		{
@@ -39,28 +51,63 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 		},
 	}
 	state := recovery.InitRecoveryState()
-	maxTookens := config.DEFAULT_MAX_TOOKENS
+	maxTokens := config.DEFAULT_MAX_TOOKENS
 
+	// loop
 	for {
-		if roundsSinceTodo >= 3 && len(messages) > 0 {
+
+		// todo提醒
+		if currentSession.RoundsSinceTodo >= 3 && len(messages) > 0 {
 			messages = append(messages, anthropic.NewUserMessage(
 				anthropic.NewTextBlock("<reminder>Update your todos.</reminder>"),
 			))
-			roundsSinceTodo = 0
+			currentSession.RoundsSinceTodo = 0
 		}
+
+		// 压缩前快照
+		preCompress, err := memory.CloneMessages(messages)
+		if err != nil {
+			return err
+		}
+
+		// compact context
+		messages = compact.ToolResultBudget(messages, config.TOOL_RESULT_MAX_BYTES)
+		messages = compact.SnipCompact(messages, config.MAX_MESSAGES)
+		messages = compact.MicroCompact(messages)
+
+		if compact.EstimateSize(messages) > config.CONTEXT_LIMIT {
+			fmt.Println("  \033[33m[auto compact]\033[0m")
+			messages, err = compact.CompactHistory(messages, ctx)
+			if err != nil {
+				return err
+			}
+		}
+
+		memoryTurn := memory.FindUserTurn(messages, query)
+
+		requestMessages := messages
+
+		// 注入记忆
+		if memoriesContent != "" && memoryTurn >= 0 && memoryTurn < len(messages) {
+			requestMessages = memory.InjectMemories(messages, memoryTurn, memoriesContent)
+		}
+
+		// 工具
 		tools := make([]anthropic.ToolUnionParam, len(tool.ToolParams))
 		for i, toolParam := range tool.ToolParams {
 			tools[i] = anthropic.ToolUnionParam{
 				OfTool: &toolParam,
 			}
 		}
+
+		// 调用LLM， retry
 		message, err := recovery.WithRetry(
 			func() (*anthropic.Message, error) {
 				return config.Client.Messages.New(
 					ctx,
 					anthropic.MessageNewParams{
-						MaxTokens: maxTookens,
-						Messages:  messages,
+						MaxTokens: maxTokens,
+						Messages:  requestMessages,
 						Model:     state.CurrentModel,
 						Tools:     tools,
 						System:    system,
@@ -70,10 +117,15 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 			state,
 			10,
 		)
+
+		// prompt太长
 		if err != nil {
 			if recovery.IsPromptTooLongError(err) {
 				if !state.HasAttemptedReactiveCompact {
-					messages = memory.ReactiveCompact(messages)
+					messages, err = compact.ReactiveCompact(messages, ctx)
+					if err != nil {
+						return err
+					}
 					state.HasAttemptedReactiveCompact = true
 					continue
 				}
@@ -84,22 +136,24 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 			}
 			return err
 		}
+		state.HasAttemptedReactiveCompact = false
 
 		fmt.Printf("  \033[90m[turn] stop_reason=%s input_tokens=%d output_tokens=%d max_tokens=%d\033[0m\n",
-			message.StopReason, message.Usage.InputTokens, message.Usage.OutputTokens, maxTookens)
+			message.StopReason, message.Usage.InputTokens, message.Usage.OutputTokens, maxTokens)
 
 		if message.StopReason == anthropic.StopReasonMaxTokens {
 			if !state.HasEscalated {
-				prev := maxTookens
-				maxTookens = config.ESCALATED_MAX_TOKENS
+				prev := maxTokens
+				maxTokens = config.ESCALATED_MAX_TOKENS
 				state.HasEscalated = true
-				fmt.Printf("  \033[33m[max_tokens] escalating max_tokens %d -> %d (stop_reason=max_tokens)\033[0m\n", prev, maxTookens)
+				fmt.Printf("  \033[33m[max_tokens] escalating max_tokens %d -> %d (stop_reason=max_tokens)\033[0m\n", prev, maxTokens)
 				continue
 			}
 			messages = append(messages, anthropic.NewAssistantMessage(message.ToParam().Content...))
+
 			if state.RecoveryCount < config.MAX_RECOVERY_RETRIES {
 				state.RecoveryCount++
-				fmt.Printf("  \033[33m[max_tokens] truncated again, requesting continuation %d/%d (max_tokens=%d)\033[0m\n", state.RecoveryCount, config.MAX_RECOVERY_RETRIES, maxTookens)
+				fmt.Printf("  \033[33m[max_tokens] truncated again, requesting continuation %d/%d (max_tokens=%d)\033[0m\n", state.RecoveryCount, config.MAX_RECOVERY_RETRIES, maxTokens)
 				messages = append(messages, anthropic.NewUserMessage(
 					anthropic.NewTextBlock("Output token limit hit. Resume directly — no apology, no recap. Pick up mid-thought."),
 				))
@@ -111,18 +165,25 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 
 		messages = append(messages, anthropic.NewAssistantMessage(message.ToParam().Content...))
 
+		// 没有tool_use，结束
 		if message.StopReason != anthropic.StopReasonToolUse {
 			for _, block := range message.Content {
 				if text, ok := block.AsAny().(anthropic.TextBlock); ok {
 					fmt.Println(text.Text)
 				}
 			}
+
+			// 压缩快照提取memory
+			err := memory.ExtractMemories(preCompress, ctx)
+			if err != nil {
+				fmt.Printf("[memory extraction error: %v]\n", err)
+			}
+
 			return nil
 		}
 
-		roundsSinceTodo++
-
 		// 工具执行
+		currentSession.RoundsSinceTodo++
 		toolResults := []anthropic.ContentBlockParamUnion{}
 		for _, block := range message.Content {
 			switch block := block.AsAny().(type) {
@@ -130,7 +191,15 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 				var input map[string]any
 				err = json.Unmarshal([]byte(block.JSON.Input.Raw()), &input)
 				if err != nil {
-					return err
+					toolResults = append(
+						toolResults,
+						anthropic.NewToolResultBlock(
+							block.ID,
+							fmt.Sprintf("invalid tool input: %v", err),
+							true,
+						),
+					)
+					continue
 				}
 				blocked := hook.TriggerHooks(hook.PreToolUse, &hook.HookContext{
 					Block: &block,
@@ -140,14 +209,34 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 					toolResults = append(toolResults, anthropic.NewToolResultBlock(block.ID, blocked, true))
 					continue
 				}
+
+				// handler
 				handler, ok := handlers[block.Name]
 				if !ok {
-					return fmt.Errorf("unknown tool: %s", block.Name)
+					toolResults = append(toolResults,
+						anthropic.NewToolResultBlock(
+							block.ID,
+							fmt.Sprintf("unknown tool: %s", block.Name),
+							true,
+						),
+					)
+					continue
 				}
 				output, err := handler(input)
 				if err != nil {
-					return err
+					toolResults = append(
+						toolResults,
+						anthropic.NewToolResultBlock(
+							block.ID,
+							err.Error(),
+							true,
+						),
+					)
+
+					continue
 				}
+
+				// hook
 				hook.TriggerHooks(hook.PostToolUse, &hook.HookContext{
 					Block:  &block,
 					Output: output,
@@ -155,8 +244,11 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 				})
 				if len(output) > 200 {
 					fmt.Println(output[:200])
+				} else {
+					fmt.Println(output)
 				}
 				toolResults = append(toolResults, anthropic.NewToolResultBlock(block.ID, output, false))
+
 			}
 		}
 		if len(toolResults) == 0 {
