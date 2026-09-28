@@ -17,6 +17,8 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 )
 
+var round = 0
+
 func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContext, currentSession *session.Session) error {
 	handlers := make(map[string]tool.ToolHandler, 0)
 	for name, handler := range tool.ToolHandlers {
@@ -55,7 +57,13 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 
 	// loop
 	for {
-
+		round++
+		if round > config.MAX_AGENT_ROUNDS {
+			return fmt.Errorf(
+				"maximum agent rounds exceeded: %d",
+				config.MAX_AGENT_ROUNDS,
+			)
+		}
 		// todo提醒
 		if currentSession.RoundsSinceTodo >= 3 && len(messages) > 0 {
 			messages = append(messages, anthropic.NewUserMessage(
@@ -93,12 +101,7 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 		}
 
 		// 工具
-		tools := make([]anthropic.ToolUnionParam, len(tool.ToolParams))
-		for i, toolParam := range tool.ToolParams {
-			tools[i] = anthropic.ToolUnionParam{
-				OfTool: &toolParam,
-			}
-		}
+		tools := tool.BuildTools()
 
 		// 调用LLM， retry
 		message, err := recovery.WithRetry(

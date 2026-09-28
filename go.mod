@@ -3,6 +3,7 @@ module agent
 go 1.26.5
 
 require (
+	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/adrg/frontmatter v0.2.0
 	github.com/anthropics/anthropic-sdk-go v1.75.0
 	github.com/chzyer/readline v1.5.1
