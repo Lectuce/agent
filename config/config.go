@@ -19,6 +19,8 @@ var Client = anthropic.NewClient(
 var PRIMARY_MODEL = os.Getenv("PRIMARY_MODEL")
 var FALLBACK_MODEL = os.Getenv("FALLBACK_MODEL")
 
+var KEEP_RECENT_TOOL_RESULTS = 3
+
 func envInt64(key string, def int64) int64 {
 	v := os.Getenv(key)
 	if v == "" {
