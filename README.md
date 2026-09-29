@@ -955,406 +955,164 @@ ReactiveCompact：API 返回 prompt_too_long 后进行紧急压缩
 
                           └────────────────────────────────┘
 
-11. Memory
+### 11. Memory
 
 Memory 用于保存适合长期保留的信息，例如用户偏好、项目背景和历史反馈。
 
 Memory 保存到：
 
+```text
 .memory/
 ├── MEMORY.md
 └── *.md
+```
 
-Memory 召回时机
+#### Memory 召回时机
 
-新的 Agent Turn 开始后，根据当前 Session 的对话和本轮 Query 调用 LoadMemories()，从长期 Memory 中选择与当前任务相关的信息。
+新的 Agent Turn 开始后，根据当前 Session 的对话和本轮 Query
+调用 `LoadMemories()`，从长期 Memory 中选择与当前任务相关的信息。
 
-Memory 放置方式
+#### Memory 放置方式
 
-选中的 Memory 不会永久追加到 Session.Messages，而是在调用 LLM 前临时注入当前请求。这样既能利用长期信息，又不会让同一份 Memory 在 Session History 中重复累积。
+选中的 Memory 不会永久追加到 `Session.Messages`，
+而是在调用 LLM 前临时注入当前请求。
 
-本轮任务完成后，通过 ExtractMemories() 从对话中提取值得长期保存的信息并写回 .memory/。
+本轮任务完成后，通过 `ExtractMemories()` 提取值得长期保存的信息并写回 `.memory/`。
 
 因此：
 
-Session.Messages：保存当前 Session 的连续对话上下文
+- `Session.Messages`：当前 Session 的连续对话上下文
+- `Memory`：可以跨 Session 使用的长期信息
 
-Memory：保存可以跨 Session 使用的长期信息
-
+```text
                   ┌───────────────────────┐
-
                   │       .memory/        │
-
                   │ MEMORY.md + *.md      │
-
                   └───────┬─────────▲─────┘
-
                           │         │
-
                      Load │         │ Extract
-
                           │         │
-
                           ▼         │
-
               ┌──────────────────────────────────────┐
-
               │                                      │
-
               ▼                                      │
-
        ┌─────────────┐                               │
-
        │ messages[]  │                               │
-
        └──────┬──────┘                               │
-
               ▼                                      │
-
        ┌─────────────────┐                           │
-
        │ Context Compact │                           │
-
        └──────┬──────────┘                           │
-
               ▼                                      │
-
        ┌─────────────────┐                           │
-
-       │Load Memories    │                           │
-
-       │select relevant  │                           │
-
+       │ Load Memories   │                           │
+       │ select relevant │                           │
        └──────┬──────────┘                           │
-
               ▼                                      │
-
        ┌─────────────────┐                           │
-
-       │Inject Memories  │                           │
-
+       │ Inject Memories │                           │
        │current user turn│                           │
-
        └──────┬──────────┘                           │
-
               ▼                                      │
-
        ┌─────────────┐                               │
-
        │     LLM     │                               │
-
        └──────┬──────┘                               │
-
               ▼                                      │
-
        ┌─────────────┐                               │
-
        │ tool_use ?  │                               │
-
        └──────┬──────┘                               │
-
           是  │  否                                  │
-
-              │   │                                   │
-
               │   └──────► 最终回答 ──► Extract ─────┘
-
               ▼
-
         Execute Tool
-
               │
-
               ▼
-
          tool_result
-
               │
-
               └──────────────────────────────────────┘
+```
 
-四、会话
+---
 
-12. Session
+## 四、会话
 
-Agent 使用 SessionManager 管理多个逻辑 Session。
+### 12. Session
 
-每个 Session 独立保存自己的 Messages 和运行状态，因此用户可以在多个会话之间切换，并继续各自之前的对话。
+Agent 使用 `SessionManager` 管理多个逻辑 Session。
+
+每个 Session 独立保存自己的 `Messages` 和运行状态，
+因此用户可以在多个会话之间切换，并继续各自之前的对话。
 
 支持：
 
+```text
 /session new <name>
 /session switch <name>
 /session list
+```
 
 例如：
 
+```text
 /session new weather
 /session new weekly
 /session switch weather
+```
 
-不同 Session 的 Messages 相互独立；长期 Memory 则可以根据相关性在不同 Session 中被召回。
+不同 Session 的 `Messages` 相互独立；
+长期 Memory 则可以根据相关性在不同 Session 中被召回。
 
+```text
                     ┌─────────────────────┐
-
                     │   SessionManager    │
-
                     │                     │
-
                     │ Current = "weather" │
-
                     └──────────┬──────────┘
-
                                │
-
               ┌────────────────┼────────────────┐
-
               │                │                │
-
               ▼                ▼                ▼
-
        ┌────────────┐    ┌────────────┐   ┌────────────┐
-
        │ default    │    │ weather    │   │ weekly     │
-
        │ Messages A │    │ Messages B │   │ Messages C │
-
        └────────────┘    └─────┬──────┘   └────────────┘
-
                                │
-
-                        Current Session
-
+                         Current Session
                                │
-
                                ▼
-
               ┌──────────────────────────────────────┐
-
               │                                      │
-
               ▼                                      │
-
        ┌─────────────────┐                           │
-
-       │messages[]       │                           │
-
+       │ messages[]      │                           │
        │= weather.Messages                           │
-
        └──────┬──────────┘                           │
-
               ▼                                      │
-
        ┌─────────────────┐                           │
-
-       │Memory + Compact │                           │
-
+       │ Memory + Compact│                           │
        └──────┬──────────┘                           │
-
               ▼                                      │
-
        ┌─────────────┐                               │
-
        │     LLM     │                               │
-
        └──────┬──────┘                               │
-
               ▼                                      │
-
        ┌─────────────┐                               │
-
        │ tool_use ?  │                               │
-
        └──────┬──────┘                               │
-
           是  │  否                                  │
-
               │   └──────────────► 最终回答          │
-
               ▼                                      │
-
         Execute Tool                                 │
-
               │                                      │
-
               ▼                                      │
-
          tool_result                                 │
-
               │                                      │
-
               └──────────────────────────────────────┘
+```
 
-Agent Loop 结束时，将本轮更新后的 messages 写回当前 Session。
+Agent Loop 结束时，将本轮更新后的 `messages` 写回当前 Session。
 
-五、日志
-
-13. Log
-
-每个 Session 使用独立 Logger，记录工具调用和执行结果，便于追踪 Agent 的实际执行过程和排查错误。
-
-主要记录：
-
-tool_call
-
-tool_result
-
-tool_error
-
-日志文件按 Session 分开保存，例如：
-
-logs/
-├── default.log
-├── weather.log
-└── weekly.log
-
-                    ┌─────────────────────┐
-
-                    │   SessionManager    │
-
-                    └──────────┬──────────┘
-
-                               │
-
-                               ▼
-
-                    ┌─────────────────────┐
-
-                    │   Current Session   │
-
-                    │ Messages + Logger   │
-
-                    └──────────┬──────────┘
-
-                               │
-
-                               ▼
-
-              ┌──────────────────────────────────────────┐
-
-              │                                          │
-
-              ▼                                          │
-
-       ┌─────────────────┐                               │
-
-       │   messages[]    │                               │
-
-       └───────┬─────────┘                               │
-
-               ▼                                         │
-
-       ┌─────────────────┐                               │
-
-       │Memory + Compact │                               │
-
-       └───────┬─────────┘                               │
-
-               ▼                                         │
-
-       ┌─────────────────┐                               │
-
-       │      LLM        │                               │
-
-       └───────┬─────────┘                               │
-
-               ▼                                         │
-
-       ┌─────────────────┐                               │
-
-       │  tool_use ?     │                               │
-
-       └───────┬─────────┘                               │
-
-           是  │  否                                    │
-
-               │   └──────────────► 最终回答             │
-
-               ▼                                         │
-
-       ┌─────────────────┐                               │
-
-       │ PreToolUse      │                               │
-
-       └───────┬─────────┘                               │
-
-               │                                         │
-
-               ├──────────────► Logger                    │
-
-               │                │                         │
-
-               │                ▼                         │
-
-               │          [tool_call]                     │
-
-               │                                          │
-
-               ▼                                          │
-
-       ┌─────────────────┐                                │
-
-       │ Execute Tool    │                                │
-
-       └───────┬─────────┘                                │
-
-               │                                          │
-
-          ┌────┴─────┐                                    │
-
-          │          │                                    │
-
-       success      error                                  │
-
-          │          │                                    │
-
-          │          └────────────► Logger                 │
-
-          │                         [tool_error]            │
-
-          │                                               │
-
-          └───────────────────────► Logger                 │
-
-                                    [tool_result]          │
-
-               │                                           │
-
-               ▼                                           │
-
-       ┌─────────────────┐                                 │
-
-       │  tool_result    │                                 │
-
-       │ append messages │                                 │
-
-       └───────┬─────────┘                                 │
-
-               │                                           │
-
-               └──────────────────────────────────────────┘
-
-Current Session.Logger
-
-          │
-
-          ▼
-
-┌────────────────────────┐
-
-│ logs/<session>.log     │
-
-│                        │
-
-│ [tool_call]            │
-
-│ [tool_result]          │
-
-│ [tool_error]           │
-
-└────────────────────────┘
-
-六、测试
+<!-- 六、测试
 
 主要测试以下场景：
 
@@ -1414,5 +1172,5 @@ Per-Session Log
 
 docs/ai-development.md
 
-README 只保留总体设计、运行方式和关键实现说明。
+README 只保留总体设计、运行方式和关键实现说明。 -->
 
