@@ -4,7 +4,7 @@
 
 Claude Code / Claude Code Agent Harness 的实现思路，包括Tool Use、Permission、Hooks、Todo Write、Subagent、Skills、System Prompt、Error Recovery、Context Compact、Memory、Session 和 Log。
 
-核心 Agent Runtime 自行实现，不依赖 LangGraph、OpenHands、OpenClaw 等现成 Agent 框架。
+使用。
 
 ## 运行方式
 
@@ -15,6 +15,12 @@ export API_KEY="..."
 export BASE_URL="..."
 export MODEL="..."
 ```
+配置参数：
+
+```bash
+config/config.go
+```
+
 启动：
 
 ```bash
@@ -724,35 +730,28 @@ Agent 使用 `SessionManager` 管理多个逻辑 Session。
 
 Agent Loop 结束时，将本轮更新后的 `messages` 写回当前 Session。
 
-<!-- 六、测试
+## 六、测试
 
-主要测试以下场景：
+| Test | Input / Setup | Expected |
+| --- | --- | --- |
+| Direct Answer | `Go 中 goroutine 是什么？` | LLM 直接回答，不调用 Tool |
+| Calculator | `计算 (123+456)*2` | 调用 `calculator`，结果为 `1158` |
+| Web Search | `搜索最新 agent 相关信息` | 调用 `web_search` |
+| Read File | `读取 go.mod 并返回 module` | 调用 `read_file` |
+| Multi-Tool Loop | `读取 go.mod，再查找所有 Go 文件` | 多次 `Tool → Result → LLM` |
+| Permission | `使用 bash 执行 echo hello > /etc/agent_test.conf` | `PreToolUse` 拦截，并返回错误 `tool_result` |
+| Todo | `使用 todo_write 规划并执行三步任务` | Todo 状态持续更新 |
+| Subagent | `使用 task 分析项目结构` | Subagent 独立执行并返回结果 |
+| Tool Error | `读取 definitely_not_exist.txt` | Tool Error 转换为 `tool_result`，Agent 不崩溃 |
+| Session | 在 A/B 两个 Session 中分别对话 | `Messages` 相互隔离 |
+| Memory | 新 Session 查询之前保存的长期偏好 | 成功召回相关 Memory |
+| Context Compact | 临时降低 `CONTEXT_LIMIT` 后连续读取多个大文件 | 自动触发 `[auto compact]`，压缩后仍能继续任务 |
+| Recovery - max_tokens | 临时降低 `DEFAULT_MAX_TOKENS`，要求生成较长回答 | 检测到 `max_tokens` 后提高上限或继续生成 |
+| Recovery - prompt_too_long | 临时降低 Context 限制或制造超长 Context | 触发 `ReactiveCompact` 后重新请求 LLM |
+| MAX_AGENT_ROUNDS | 临时设置 `MAX_AGENT_ROUNDS=2`，要求连续执行 3 次独立 Tool Call | 超过限制后返回 `maximum agent rounds exceeded` |
+| Log | 在指定 Session 中执行成功和失败的 Tool | `logs/<session>.log` 中出现 `tool_call`、`tool_result`、`tool_error` |
 
-普通问题直接回答
-
-Calculator Tool Calling
-
-Web Search
-
-Todo Write
-
-连续多 Tool Loop
-
-纯对话追问
-
-基于 Tool Result 的追问
-
-Multi-Session 隔离与切换
-
-Context Compact
-
-Tool Error Recovery
-
-MAX_AGENT_ROUNDS
-
-Memory Recall
-
-七、AI Prompt 与问题解决记录
+<!-- 七、AI Prompt 与问题解决记录
 
 开发过程中使用 AI 辅助理解、设计和调试 Agent Runtime，主要涉及：
 
