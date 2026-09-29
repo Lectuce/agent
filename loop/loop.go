@@ -17,9 +17,8 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 )
 
-var round = 0
-
 func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContext, currentSession *session.Session) error {
+	var round = 0
 	handlers := make(map[string]tool.ToolHandler, 0)
 	for name, handler := range tool.ToolHandlers {
 		handlers[name] = handler
@@ -204,6 +203,14 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 					)
 					continue
 				}
+
+				currentSession.Logger.Printf(
+					"[tool_call] tool=%v id=%v args=%v",
+					block.Name,
+					block.ID,
+					input,
+				)
+
 				blocked := hook.TriggerHooks(hook.PreToolUse, &hook.HookContext{
 					Block: &block,
 					Args:  input,
@@ -227,6 +234,11 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 				}
 				output, err := handler(input)
 				if err != nil {
+					currentSession.Logger.Printf(
+						"[tool_error] tool=%v error=%v",
+						block.Name,
+						err,
+					)
 					toolResults = append(
 						toolResults,
 						anthropic.NewToolResultBlock(
@@ -245,11 +257,20 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 					Output: output,
 					Args:   input,
 				})
-				if len(output) > 200 {
-					fmt.Println(output[:200])
+
+				// 日志
+				preview := output
+				if len(preview) > 200 {
+					fmt.Println(preview[:200])
 				} else {
-					fmt.Println(output)
+					fmt.Println(preview)
 				}
+				currentSession.Logger.Printf(
+					"[tool_result] tool=%v output=%v",
+					block.Name,
+					preview,
+				)
+
 				toolResults = append(toolResults, anthropic.NewToolResultBlock(block.ID, output, false))
 
 			}

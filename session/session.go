@@ -1,7 +1,9 @@
 package session
 
 import (
+	"agent/logx"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -11,6 +13,7 @@ type Session struct {
 	ID              string
 	Messages        []anthropic.MessageParam
 	RoundsSinceTodo int
+	Logger          *log.Logger
 }
 
 type SessionManager struct {
@@ -31,6 +34,11 @@ func NewSessionManager() *SessionManager {
 }
 
 func (sm *SessionManager) NewSession(name string) bool {
+	logger, err := logx.NewLogger(name)
+	if err != nil {
+		return false
+	}
+
 	_, exists := sm.Sessions[name]
 	if exists {
 		return false
@@ -39,6 +47,7 @@ func (sm *SessionManager) NewSession(name string) bool {
 	sm.Sessions[name] = &Session{
 		ID:       name,
 		Messages: []anthropic.MessageParam{},
+		Logger:   logger,
 	}
 	sm.Current = name
 	return true
