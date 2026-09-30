@@ -61,10 +61,6 @@ func ToolResultBudget(messages []anthropic.MessageParam, maxBytes int) []anthrop
 
 		newSize := toolResultSize(last.Content[index])
 		total = total - oldSize + newSize
-		for _, block := range last.Content {
-			total += toolResultSize(block)
-		}
-
 	}
 	return messages
 

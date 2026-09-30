@@ -116,9 +116,3 @@ func LoadSkill(name string) string {
 	return skill.Content
 
 }
-
-func BuildSystem() string {
-	catalog := ListSkill()
-
-	return fmt.Sprintf("You are a coding agent at %v.\n Skills available:\n%v\n Use load_skill to get full details when needed.\n", config.WORKDIR, catalog)
-}

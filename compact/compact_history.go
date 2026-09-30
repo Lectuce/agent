@@ -76,7 +76,6 @@ func summarizeHistory(messages []anthropic.MessageParam, ctx context.Context) (s
 	if len(conversation) > 80000 {
 		conversation = conversation[:80000]
 	}
-	conversation = conversation[:80000]
 	if err != nil {
 		return "", err
 	}

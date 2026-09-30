@@ -9,8 +9,14 @@ import (
 	"github.com/anthropics/anthropic-sdk-go/option"
 )
 
+var WORKDIR string
+var SKILLSDIR = WORKDIR + "/.skills"
+var TOOL_RESULTS_DIR = WORKDIR + "/.task_outputs/tool-results"
+var TRANSCRIPT_DIR = WORKDIR + "/.transcripts"
+var MEMORY_DIR = WORKDIR + "/.memory"
+var MEMORY_INDEX = MEMORY_DIR + "/MEMORY.md"
+
 const (
-	WORKDIR                  = "/home/yujun/projects/agent"
 	KEEP_RECENT_TOOL_RESULTS = 3
 	MAX_CONSECUTIVE_529      = 3
 	MAX_RECOVERY_RETRIES     = 3
@@ -21,12 +27,6 @@ const (
 	TOOL_RESULT_MAX_BYTES    = 200000
 	MAX_MESSAGES             = 50
 	MAX_AGENT_ROUNDS         = 20
-
-	SKILLSDIR        = WORKDIR + "/.skills"
-	TOOL_RESULTS_DIR = WORKDIR + "/.task_outputs/tool-results"
-	TRANSCRIPT_DIR   = WORKDIR + "/.transcripts"
-	MEMORY_DIR       = WORKDIR + "/.memory"
-	MEMORY_INDEX     = MEMORY_DIR + "/MEMORY.md"
 )
 
 var Client = anthropic.NewClient(

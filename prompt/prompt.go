@@ -19,10 +19,6 @@ var promptSections = map[string]string{
 
 	"identity": "You are a coding agent. Act, don't explain.",
 
-	"tools": "",
-
-	"skills": "",
-
 	"workspace": fmt.Sprintf("Working directory: %v", config.WORKDIR),
 
 	"memory": "Relevant memories are injected below when available.",
@@ -38,24 +34,20 @@ var lastContextKey string
 var lastPrompt string
 
 func assembleSystemPrompt(context PromptContext) string {
-	sections := make([]string, 0)
-
-	sections = append(sections, promptSections["identity"])
+	sections := []string{promptSections["identity"], promptSections["workspace"], promptSections["memory"]}
 
 	toolNames := tool.ToolNames()
+
 	for i := 0; i < len(toolNames); i++ {
-		promptSections["tools"] += tool.ToolNames()[i] + " "
+		sections = append(sections, "tools:"+toolNames[i])
 	}
-	sections = append(sections, promptSections["tools"])
 
 	catalog := skills.ListSkill()
 	if catalog != "" {
-		promptSections["tools"] += catalog
+		sections = append(sections, "skills:"+catalog)
 	}
-	sections = append(sections, promptSections["skills"])
 
 	sections = append(sections, promptSections["workspace"])
-	sections = append(sections, skills.BuildSystem())
 
 	memories := context.Memories
 	if len(memories) > 0 {
