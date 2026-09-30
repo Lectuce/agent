@@ -751,11 +751,11 @@ Agent Loop 结束时，将本轮更新后的 `messages` 写回当前 Session。
 | MAX_AGENT_ROUNDS | 临时设置 `MAX_AGENT_ROUNDS=2`，要求连续执行 3 次独立 Tool Call | 超过限制后返回 `maximum agent rounds exceeded` |
 | Log | 在指定 Session 中执行成功和失败的 Tool | `logs/<session>.log` 中出现 `tool_call`、`tool_result`、`tool_error` |
 
-<!-- 七、AI Prompt 与问题解决记录
+## 七、AI Prompt 与问题解决记录
 
-开发过程中使用 AI 辅助理解、设计和调试 Agent Runtime，主要涉及：
+开发过程中使用 AI 辅助理解、设计和调试 Agent，主要涉及：
 
-Agent Loop 与 Tool Use / Tool Result 协议
+Agent Loop 与 Tool Use / Tool Result 
 
 Tool Registry 与 Handler 设计
 
@@ -779,9 +779,11 @@ MAX_AGENT_ROUNDS
 
 Per-Session Log
 
-建议将较长的 Prompt 和问题解决过程单独记录到：
 
-docs/ai-development.md
+主要 Prompt、遇到的问题、修改过程和关键决策于
+```text
+development.md
+```
 
-README 只保留总体设计、运行方式和关键实现说明。 -->
+
 
