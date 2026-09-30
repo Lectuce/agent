@@ -71,7 +71,7 @@ Agent 的核心是一个持续的 LLM → Tool → Result → LLM 循环。
 
 ### 2. Tool Use
 
-在基础 Agent Loop 上加入统一的 Tool Registry。每个工具通过名称、描述和参数 Schema 暴露给 LLM，模型根据任务自主选择工具，Runtime 再根据工具名称分发到对应 Handler。
+在基础 Agent Loop 上加入统一的 Tool Registry。每个工具通过名称、描述和参数 Schema 暴露给 LLM，模型根据任务自主选择工具，Agent 再根据工具名称分发到对应 Handler。
 
 Client Tools 由本地 Handler 执行；Server Tool 则由模型 API Provider 执行。所有工具最终统一注册到模型请求中。
 
