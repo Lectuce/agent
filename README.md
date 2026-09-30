@@ -455,8 +455,8 @@ Agent 对不同错误采用不同的恢复方式，使可恢复错误尽量不�
 
 Agent 对不同异常采用不同的恢复方式，使可恢复问题尽量不会直接终止整个任务。
 
-- `429`：Retry / Backoff
-- `529`：Retry / Backoff；连续达到阈值后尝试切换 `FALLBACK_MODEL`
+- `429`（请求太频繁）：Retry / Backoff
+- `529`（服务器过载）：Retry / Backoff；连续达到阈值后尝试切换 `FALLBACK_MODEL`
 - `max_tokens`：提高 Token 上限或继续生成
 - `prompt_too_long`：触发 `ReactiveCompact`
 - Tool Error：转换成错误 `tool_result`，让模型继续处理
