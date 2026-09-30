@@ -1,2 +1,0 @@
-2026/09/30 17:32:13.109572 [tool_call] tool=calculator id=call_00_h251vku6adyswx0vy0xj982p args=map[expression:(123+456)*2]
-2026/09/30 17:32:13.109679 [tool_result] tool=calculator output=1158

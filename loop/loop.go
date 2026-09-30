@@ -189,6 +189,9 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 		toolResults := []anthropic.ContentBlockParamUnion{}
 		for _, block := range message.Content {
 			switch block := block.AsAny().(type) {
+			case anthropic.ServerToolUseBlock:
+				currentSession.Logger.Printf("[server_tool_call] tool=%v id=%v", block.Name, block.ID)
+				fmt.Printf("[server_tool_call] tool=%v id=%v\n", block.Name, block.ID)
 			case anthropic.ToolUseBlock:
 				var input map[string]any
 				err = json.Unmarshal([]byte(block.JSON.Input.Raw()), &input)
@@ -270,7 +273,11 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 					block.Name,
 					preview,
 				)
-
+				fmt.Printf(
+					"[tool_result] tool=%v output=%v",
+					block.Name,
+					preview,
+				)
 				toolResults = append(toolResults, anthropic.NewToolResultBlock(block.ID, output, false))
 
 			}
