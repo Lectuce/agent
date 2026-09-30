@@ -4,7 +4,7 @@
 
 Claude Code / Claude Code Agent Harness 的实现思路，包括Tool Use、Permission、Hooks、Todo Write、Subagent、Skills、System Prompt、Error Recovery、Context Compact、Memory、Session 和 Log。
 
-使用。
+使用 anthropic-sdk-go 实现。
 
 ## 运行方式
 
