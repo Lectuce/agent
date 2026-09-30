@@ -107,6 +107,7 @@ var ClientTools = []anthropic.ToolParam{
 			Required: []string{"todos"},
 		},
 	},
+
 	{
 		Name:        "task",
 		Description: anthropic.String("Launch a subagent to handle a complex subtask. Returns only the final conclusion."),
@@ -118,6 +119,20 @@ var ClientTools = []anthropic.ToolParam{
 				},
 			},
 			Required: []string{"description"},
+		},
+	},
+
+	{
+		Name:        "load_skill",
+		Description: anthropic.String("Load the full content of a skill by name."),
+		InputSchema: anthropic.ToolInputSchemaParam{
+			Type: "object",
+			Properties: map[string]any{
+				"name": map[string]any{
+					"type": "string",
+				},
+			},
+			Required: []string{"name"},
 		},
 	},
 

@@ -9,6 +9,7 @@ var ToolHandlers = map[string]ToolHandler{
 	"edit_file":  runEdit,
 	"glob":       runGlob,
 	"todo_write": runTodoWrite,
+	"load_skill": loadSkill,
 	"calculator": runCalculator,
 }
 

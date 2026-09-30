@@ -2,6 +2,7 @@ package tool
 
 import (
 	"agent/config"
+	"agent/skills"
 	"context"
 	"fmt"
 	"os"
@@ -154,6 +155,19 @@ func safePath(input map[string]any) (string, error) {
 	}
 
 	return path, nil
+}
+
+func loadSkill(input map[string]any) (string, error) {
+	name, ok := input["name"].(string)
+	if !ok || name == "" {
+		return "", fmt.Errorf("name is required")
+	}
+	skill, ok := skills.SkillRegistry[name]
+	if !ok {
+		return "", fmt.Errorf("Skill not found: %v\n", skill)
+	}
+	return skill.Content, nil
+
 }
 
 func runCalculator(input map[string]any) (string, error) {

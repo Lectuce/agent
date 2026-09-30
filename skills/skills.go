@@ -25,7 +25,7 @@ var SkillRegistry = map[string]skill{}
 
 const SKILLSDIR = "/home/yujun/projects/agent/skills"
 
-func scanSkill() error {
+func ScanSkill() error {
 	entries, err := os.ReadDir(SKILLSDIR)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -109,7 +109,7 @@ func parseFrontmatter(raw string) (SkillMeta, string, error) {
 // 	return fmt.Sprintf("You are a coding agent at %v.\n Skills available:\n%v\n Use load_skill to get full details when needed.\n", config.WORKDIR, catalog)
 // }
 
-func loadSkill(name string) string {
+func LoadSkill(name string) string {
 	skill, ok := SkillRegistry[name]
 	if !ok {
 		return fmt.Sprintf("Skill not found: %v\n", skill)

@@ -5,6 +5,7 @@ import (
 	"agent/loop"
 	"agent/prompt"
 	"agent/session"
+	"agent/skills"
 	"context"
 	"fmt"
 
@@ -12,6 +13,10 @@ import (
 )
 
 func main() {
+	err := skills.ScanSkill()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	hook.Register()
 	fmt.Println("输入问题，回车发送。输入 q 退出。")
 	sessionManager := session.NewSessionManager()
