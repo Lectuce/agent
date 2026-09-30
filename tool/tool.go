@@ -1,6 +1,8 @@
 package tool
 
 import (
+	"sort"
+
 	"github.com/anthropics/anthropic-sdk-go"
 )
 
@@ -176,4 +178,17 @@ func BuildTools() []anthropic.ToolUnionParam {
 	tools = append(tools, ServerTools...)
 
 	return tools
+}
+
+func ToolNames() []string {
+	names := make([]string, 0)
+
+	for _, clientTool := range ClientTools {
+		names = append(names, string(clientTool.Name))
+	}
+
+	names = append(names, "web_search")
+	sort.Strings(names)
+
+	return names
 }

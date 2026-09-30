@@ -69,6 +69,9 @@ func writeTranscript(messages []anthropic.MessageParam) (string, error) {
 func summarizeHistory(messages []anthropic.MessageParam, ctx context.Context) (string, error) {
 	compactState := recovery.InitRecoveryState()
 	rawData, err := json.Marshal(messages)
+	if err != nil {
+		return "", err
+	}
 	conversation := string(rawData)
 	if len(conversation) > 80000 {
 		conversation = conversation[:80000]

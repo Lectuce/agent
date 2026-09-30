@@ -40,12 +40,27 @@ func ToolResultBudget(messages []anthropic.MessageParam, maxBytes int) []anthrop
 		toolUseID := block.OfToolResult.ToolUseID
 		output := ""
 		for _, content := range block.OfToolResult.Content {
-			output += content.OfText.Text
+			if content.OfText != nil {
+				output += content.OfText.Text
+			}
 		}
 
-		persistLargeOutput(toolUseID, output)
+		oldSize := toolResultSize(block)
+		persisted := persistLargeOutput(toolUseID, output)
 
-		total = 0
+		isError := false
+		if block.OfToolResult.IsError.Valid() {
+			isError = block.OfToolResult.IsError.Value
+		}
+
+		last.Content[index] = anthropic.NewToolResultBlock(
+			toolUseID,
+			persisted,
+			isError,
+		)
+
+		newSize := toolResultSize(last.Content[index])
+		total = total - oldSize + newSize
 		for _, block := range last.Content {
 			total += toolResultSize(block)
 		}

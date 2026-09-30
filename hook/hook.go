@@ -93,8 +93,10 @@ func summaryHook(ctx *HookContext) string {
 	for _, message := range ctx.Messages {
 		for _, block := range message.Content {
 			blockType := block.GetType()
-			if blockType != nil && *blockType == "tool_result" {
-				toolCount++
+			if blockType != nil {
+				if *blockType == "tool_result" || *blockType == "web_search_tool_result" {
+					toolCount++
+				}
 			}
 		}
 	}

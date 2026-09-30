@@ -169,6 +169,10 @@ func AgentLoop(query string, ctx context.Context, promptCtx *prompt.PromptContex
 
 		// 没有tool_use，结束
 		if message.StopReason != anthropic.StopReasonToolUse {
+			_ = hook.TriggerHooks(hook.Stop, &hook.HookContext{
+				Messages: messages,
+			})
+
 			for _, block := range message.Content {
 				if text, ok := block.AsAny().(anthropic.TextBlock); ok {
 					fmt.Println(text.Text)

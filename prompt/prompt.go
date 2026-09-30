@@ -19,7 +19,9 @@ var promptSections = map[string]string{
 
 	"identity": "You are a coding agent. Act, don't explain.",
 
-	"tools": "Available tools: bash, read_file, write_file.",
+	"tools": "",
+
+	"skills": "",
 
 	"workspace": fmt.Sprintf("Working directory: %v", config.WORKDIR),
 
@@ -39,7 +41,19 @@ func assembleSystemPrompt(context PromptContext) string {
 	sections := make([]string, 0)
 
 	sections = append(sections, promptSections["identity"])
+
+	toolNames := tool.ToolNames()
+	for i := 0; i < len(toolNames); i++ {
+		promptSections["tools"] += tool.ToolNames()[i] + " "
+	}
 	sections = append(sections, promptSections["tools"])
+
+	catalog := skills.ListSkill()
+	if catalog != "" {
+		promptSections["tools"] += catalog
+	}
+	sections = append(sections, promptSections["skills"])
+
 	sections = append(sections, promptSections["workspace"])
 	sections = append(sections, skills.BuildSystem())
 
