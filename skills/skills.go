@@ -79,9 +79,7 @@ func ScanSkill() error {
 func ListSkill() string {
 	lines := make([]string, 0)
 	for _, skill := range SkillRegistry {
-		lines = append(lines,
-			fmt.Sprintf("- **%v**: %v", skill.Name, skill.Description),
-		)
+		lines = append(lines, fmt.Sprintf("- **%v**: %v", skill.Name, skill.Description))
 	}
 	sort.Strings(lines)
 	return strings.Join(lines, "\n")

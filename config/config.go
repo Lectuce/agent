@@ -56,11 +56,9 @@ var ESCALATED_MAX_TOKENS = envInt64("ESCALATED_MAX_TOKENS", 64000)
 var DEFAULT_COMPACT_TOOKENS = envInt64("DEFAULT_COMPACT_TOOKENS", 64000)
 var DEFAULT_MEMORY_TOOKENS = envInt64("DEFAULT_COMPACT_TOOKENS", 200)
 
-var wd, _ = os.Getwd()
-
 var SUBSYSTEM = []anthropic.TextBlockParam{
 	{
-		Text: fmt.Sprintf("You are a coding agent at %v.", wd),
+		Text: fmt.Sprintf("You are a coding agent at %v.", WORKDIR),
 	},
 	{
 		Text: "Complete the task you were given, then return a concise summary.",
