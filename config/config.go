@@ -33,8 +33,10 @@ var Client = anthropic.NewClient(
 	option.WithAPIKey(os.Getenv("API_KEY")),
 	option.WithBaseURL(os.Getenv("BASE_URL")),
 )
-var PRIMARY_MODEL = os.Getenv("PRIMARY_MODEL")
+
 var FALLBACK_MODEL = os.Getenv("FALLBACK_MODEL")
+var MODEL = os.Getenv("MODEL")
+var PRIMARY_MODEL = MODEL
 
 func envInt64(key string, def int64) int64 {
 	v := os.Getenv(key)

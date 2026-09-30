@@ -81,8 +81,12 @@ func WithRetry(fn func() (*anthropic.Message, error), state *RecoveryState, maxR
 
 		if isOverloaded {
 			state.Consecutive529++
-			if state.Consecutive529 >= config.MAX_CONSECUTIVE_529 && config.FALLBACK_MODEL != "" {
-				state.CurrentModel = config.FALLBACK_MODEL
+			if state.Consecutive529 >= config.MAX_CONSECUTIVE_529 {
+				if config.FALLBACK_MODEL != "" {
+					state.CurrentModel = config.FALLBACK_MODEL
+				} else {
+					fmt.Printf("  \033[31m[529 x%v] no FALLBACK_MODEL_ID configured, continuing retry\033[0m", config.MAX_CONSECUTIVE_529)
+				}
 			}
 		}
 
