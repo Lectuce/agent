@@ -2,6 +2,7 @@ package prompt
 
 import (
 	"agent/config"
+	"agent/skills"
 	"agent/tool"
 	"encoding/json"
 	"fmt"
@@ -40,6 +41,7 @@ func assembleSystemPrompt(context PromptContext) string {
 	sections = append(sections, promptSections["identity"])
 	sections = append(sections, promptSections["tools"])
 	sections = append(sections, promptSections["workspace"])
+	sections = append(sections, skills.BuildSystem())
 
 	memories := context.Memories
 	if len(memories) > 0 {

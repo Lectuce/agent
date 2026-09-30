@@ -1,6 +1,7 @@
 package skills
 
 import (
+	"agent/config"
 	"bytes"
 	"fmt"
 	"os"
@@ -23,10 +24,8 @@ type SkillMeta struct {
 
 var SkillRegistry = map[string]skill{}
 
-const SKILLSDIR = "/home/yujun/projects/agent/skills"
-
 func ScanSkill() error {
-	entries, err := os.ReadDir(SKILLSDIR)
+	entries, err := os.ReadDir(config.SKILLSDIR)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -37,7 +36,7 @@ func ScanSkill() error {
 		if !entry.IsDir() {
 			continue
 		}
-		dir := filepath.Join(SKILLSDIR, entry.Name())
+		dir := filepath.Join(config.SKILLSDIR, entry.Name())
 		manifest := filepath.Join(dir, "SKILL.md")
 		data, err := os.ReadFile(manifest)
 		if err != nil {
@@ -116,4 +115,10 @@ func LoadSkill(name string) string {
 	}
 	return skill.Content
 
+}
+
+func BuildSystem() string {
+	catalog := ListSkill()
+
+	return fmt.Sprintf("You are a coding agent at %v.\n Skills available:\n%v\n Use load_skill to get full details when needed.\n", config.WORKDIR, catalog)
 }

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"agent/skills"
 	"fmt"
 	"os"
 	"strconv"
@@ -23,6 +22,7 @@ const (
 	MAX_MESSAGES             = 50
 	MAX_AGENT_ROUNDS         = 20
 
+	SKILLSDIR        = WORKDIR + "/.skills"
 	TOOL_RESULTS_DIR = WORKDIR + "/.task_outputs/tool-results"
 	TRANSCRIPT_DIR   = WORKDIR + "/.transcripts"
 	MEMORY_DIR       = WORKDIR + "/.memory"
@@ -68,10 +68,4 @@ var SUBSYSTEM = []anthropic.TextBlockParam{
 	{
 		Text: "Do not delegate further.",
 	},
-}
-
-func buildSystem() string {
-	catalog := skills.ListSkill()
-
-	return fmt.Sprintf("You are a coding agent at %v.\n Skills available:\n%v\n Use load_skill to get full details when needed.\n", WORKDIR, catalog)
 }
