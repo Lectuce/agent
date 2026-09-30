@@ -22,15 +22,22 @@ type SessionManager struct {
 }
 
 func NewSessionManager() *SessionManager {
+	sessionLogger, err := logx.NewLogger("default")
+	if err != nil {
+		panic(fmt.Sprintf("failed to create default session logger: %v", err))
+	}
+
 	return &SessionManager{
 		Sessions: map[string]*Session{
 			"default": {
 				ID:       "default",
 				Messages: []anthropic.MessageParam{},
+				Logger:   sessionLogger,
 			},
 		},
 		Current: "default",
 	}
+
 }
 
 func (sm *SessionManager) NewSession(name string) bool {
