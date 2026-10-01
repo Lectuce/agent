@@ -1,0 +1,26 @@
+2026/10/01 00:23:19.590735 [tool_call] tool=bash id=call_00_euvw9a5ya9vmhuyo0q06szfc args=map[command:pwd && ls -la]
+2026/10/01 00:23:19.593039 [tool_result] tool=bash output=/home/yujun/projects/agent
+total 180
+drwxrwxr-x 18 yujun yujun  4096 Sep 30 17:49 .
+drwxrwxr-x 10 yujun yujun  4096 Sep 30 20:48 ..
+drwxrwxr-x  7 yujun yujun  4096 Sep 30 21:35 .git
+drwxr-xr-x  2 yujun yujun  4096 Sep 30 20:25 .memory
+drwxrwxr-x  6 yujun yujun  4096 Sep 30 18:05 .skills
+-rw-rw-r--  1 yujun yujun 72762 Sep 30 21:35 README.md
+drwxrwxr-x  2 yujun yujun  4096 Sep 28 20:21 compact
+drwxrwxr-x  2 yujun yujun  4096 Sep 30 20:01 config
+-rw-rw-r--  1 yujun yujun 16551 Sep 30 16:31 development.md
+-rw-rw-r--  1 yujun yujun   886 Sep 28 22:42 go.mod
+-rw-rw-r--  1 yujun yujun  4815 Sep 28 22:42 go.sum
+drwxrwxr-x  2 yujun yujun  4096 Sep 27 15:04 hook
+drwxrwxr-x  2 yujun yujun  4096 Oct  1 00:22 logs
+drwxrwxr-x  2 yujun yujun  4096 Sep 29 17:24 logx
+drwxrwxr-x  2 yujun yujun  4096 Sep 27 21:24 loop
+-rw-rw-r--  1 yujun yujun  1181 Sep 30 17:20 main.go
+drwxrwxr-x  2 yujun yujun  4096 Sep 28 21:30 memory
+drwxrwxr-x  2 yujun yujun  4096 Sep 27 19:45 prompt
+drwxrwxr-x  2 yujun yujun  4096 Sep 27 21:24 recovery
+drwxrwxr-x  2 yujun yujun  4096 Sep 28 20:49 session
+drwxrwxr-x  2 yujun yujun  4096 Sep 30 17:35 skills
+drwxrwxr-x  2 yujun yujun  4096 Sep 27 14:35 subagent
+drwxrwxr-x  2 yujun yujun  4096 Sep 28 22:43 tool
