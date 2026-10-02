@@ -129,8 +129,8 @@ var ClientTools = []anthropic.ToolParam{
 		Description: anthropic.String("Load the full content of a skill by name."),
 		InputSchema: anthropic.ToolInputSchemaParam{
 			Type: "object",
-			Properties: map[string]any{
-				"name": map[string]any{
+			Properties: map[string]interface{}{
+				"name": map[string]interface{}{
 					"type": "string",
 				},
 			},
@@ -143,8 +143,8 @@ var ClientTools = []anthropic.ToolParam{
 		Description: anthropic.String("Evaluate a mathematical expression."),
 		InputSchema: anthropic.ToolInputSchemaParam{
 			Type: "object",
-			Properties: map[string]any{
-				"expression": map[string]any{
+			Properties: map[string]interface{}{
+				"expression": map[string]interface{}{
 					"type":        "string",
 					"description": "Evaluate an arithmetic expression containing numbers, parentheses, and arithmetic operators such as +, -, *, /, and %.",
 				},

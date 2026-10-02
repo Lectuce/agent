@@ -9,7 +9,7 @@ import (
 	"github.com/anthropics/anthropic-sdk-go/option"
 )
 
-var WORKDIR string
+var WORKDIR = initWorkDir()
 var SKILLSDIR = WORKDIR + "/.skills"
 var TOOL_RESULTS_DIR = WORKDIR + "/.task_outputs/tool-results"
 var TRANSCRIPT_DIR = WORKDIR + "/.transcripts"
