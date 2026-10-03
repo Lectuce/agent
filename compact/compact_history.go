@@ -76,9 +76,6 @@ func summarizeHistory(messages []anthropic.MessageParam, ctx context.Context) (s
 	if len(conversation) > 80000 {
 		conversation = conversation[:80000]
 	}
-	if err != nil {
-		return "", err
-	}
 	prompts := "Summarize this coding-agent conversation so work can continue.\n" +
 		"Preserve: 1. current goal, 2. key findings/decisions, 3. files read/changed, " +
 		"4. remaining work, 5. user constraints.\nBe compact but concrete.\n\n" + conversation
