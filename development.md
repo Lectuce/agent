@@ -16,6 +16,8 @@ Answer
 即使模型返回了工具调用，也没有形成真正的 Agent Runtime。
 Solution
 维护持续增长的 messages[]，并用循环反复调用模型：
+
+```text
               ┌──────────────────────────────┐
               │                              │
               ▼                              │
@@ -41,6 +43,8 @@ Solution
        │ tool_result │                       │
        └──────┬──────┘                       │
               └──────────────────────────────┘
+```
+
 核心思想：
 Model → Tool → Result → Model
 2. Tool Registry：把工具从 Agent Loop 中拆出去
@@ -72,6 +76,7 @@ handler, ok := ToolHandlers[block.Name]
 找到对应实现。
 Result
 Agent Loop 只负责协议与调度，具体工具逻辑独立维护。
+
 3. Tool Name 不一致导致 unknown tool
 Problem
 曾出现：
@@ -86,6 +91,7 @@ Solution
 "read_file": runRead
 Result
 模型返回的 tool_use.name 可以稳定匹配本地 Handler。
+
 4. Tool 输入解析导致类型断言问题
 Problem
 读取 Tool 参数时曾出现类似：
@@ -108,6 +114,7 @@ if v, ok := input["offset"]; ok {
 }
 Result
 Tool 参数缺失时使用默认值，而不是让整个 Runtime 崩溃。
+
 5. Bash Tool：超时和危险命令限制
 Prompt
 Agent 可以执行 bash，但如何避免命令无限运行或者执行明显危险操作？
@@ -131,6 +138,7 @@ reboot
 > /dev/
 Result
 Bash Tool 从“直接执行任意 shell”变成受 Runtime 管理的工具。
+
 6. Permission：拒绝工具后为什么不能直接退出
 Prompt
 PreToolUse 判断一个工具危险后，是直接 return error，还是返回给模型？
@@ -158,6 +166,7 @@ error tool_result
 LLM
 Result
 模型可以根据失败结果修改策略，而不是 Runtime 直接退出。
+
 7. Hooks：把扩展逻辑从主循环中抽离
 Prompt
 Permission、Context Injection、Log 都放在 AgentLoop 里会越来越复杂，如何解耦？
@@ -175,6 +184,7 @@ Stop
 - Stop：本轮结束阶段处理
 Result
 新增扩展时不需要不断修改核心 Agent Loop。
+
 8. UserPromptSubmit：Hook 不能只打印日志
 Problem
 如果 Hook 只是输出：
@@ -191,6 +201,7 @@ Main 中再使用更新后的 Query：
 hookCtx := &hook.HookContext{Query: query}
 hook.TriggerHooks(hook.UserPromptSubmit, hookCtx)
 query = hookCtx.Query
+
 9. Todo Write：让 Agent 显式维护长任务
 Prompt
 长任务里模型容易忘记自己做到哪里，能不能增加 Todo？
@@ -238,6 +249,7 @@ Sub Final Result
 main tool_result
 Result
 Main Agent 只接收 Subagent 的最终结果。
+
 11. Skills：按需加载，而不是全部放进 Context
 Prompt
 Skill 很多时，是不是应该把所有 SKILL.md 都直接放到 System Prompt？
@@ -252,6 +264,7 @@ description
 SKILL.md
 Result
 Skills 变成按需加载的能力。
+
 12. System Prompt：稳定信息和 messages 分开
 Prompt
 Agent Identity、Workspace、Tools、Skills、Memory 这些稳定信息应该放在哪里？
@@ -268,6 +281,7 @@ messages[]
 tools
 Result
 Runtime 配置与真实会话历史分离。
+
 13. Tool Error：为什么不能 return err
 Prompt
 read_file 或 bash 执行失败时，AgentLoop 应该直接退出吗？
